@@ -5,6 +5,7 @@ from train_time import get_train_time  # Import the get_train_time function
 
 def read_header(bus):
     try:
+        #print(f"Reading header for bus: {bus}")
         bridge_control_output = subprocess.check_output(["setpci", "-s", bus, "0e.w"])
         return f" : {bridge_control_output.decode().strip()}"
     except subprocess.CalledProcessError:
@@ -12,6 +13,7 @@ def read_header(bus):
 
 def read_slot_capabilities(bus):
     try:
+        #print(f"Reading slot capabilities for bus: {bus}")
         slot_capabilities_output = subprocess.check_output(["setpci", "-s", bus, "CAP_EXP+0X14.l"])
         return slot_capabilities_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -33,6 +35,7 @@ def hex_to_binary(hex_string):
 
 def read_secondary_bus_number(bus):
     try:
+        #print(f"Reading secondary bus number for bus: {bus}")
         secondary_bus_output = subprocess.check_output(["setpci", "-s", bus, "19.b"])
         return secondary_bus_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -40,6 +43,7 @@ def read_secondary_bus_number(bus):
 
 def read_bridge_control(bus):
     try:
+        #print(f"Reading bridge control for bus: {bus}")
         bridge_control_output = subprocess.check_output(["setpci", "-s", bus, "3e.w"])
         return bridge_control_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -47,6 +51,7 @@ def read_bridge_control(bus):
 
 def read_link_status(bus):
     try:
+        #print(f"Reading link status for bus: {bus}")
         link_status_output = subprocess.check_output(["setpci", "-s", bus, "CAP_EXP+0X12.w"])
         return link_status_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -54,6 +59,7 @@ def read_link_status(bus):
 
 def read_link_capabilities17(bus):
     try:
+        #print(f"Reading link capabilities 17 for bus: {bus}")
         link_capabilities_output = subprocess.check_output(["setpci", "-s", bus, "CAP_EXP+0X0c.l"])
         return link_capabilities_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -62,6 +68,7 @@ def read_link_capabilities17(bus):
 
 def read_link_capabilities18(bus):
     try:
+        #print(f"Reading link capabilities 18 for bus: {bus}")
         link_capabilities_output = subprocess.check_output(["setpci", "-s", bus, "CAP_EXP+0X0c.l"])
         return link_capabilities_output.decode().strip()
     except subprocess.CalledProcessError:
@@ -70,7 +77,9 @@ def read_link_capabilities18(bus):
 
 def set_bridge_control(bus, value, password):
     try:
+        #print(f"Setting bridge control for bus: {bus} to {value}")
         subprocess.run(["sudo", "-S", "setpci", "-s", bus, "3e.w=" + value], input=password.encode(), check=True)
+        #print(f"Set Bridge Control for {bus} to {value}")
     except subprocess.CalledProcessError:
         print(f"Error setting Bridge Control for {bus}.")
 
@@ -96,7 +105,7 @@ def read_and_extract_link_capabilities(bus, read_func):
 def extract_link_status(hex_string):
     binary_string = hex_to_binary(hex_string)
     current_link_width = int(binary_string[-4:], 2)
-    current_link_speed = int(binary_string[-10:-4:], 2)
+    current_link_speed = int(binary_string[-10:-4], 2)
     return current_link_width, current_link_speed
 
 def get_slot_numbers():
@@ -132,18 +141,17 @@ def log_dmidecode_info(log_file):
         with open(log_file, 'a') as log:
             log.write(f"\nError running dmidecode: {str(e)}\n")
 
-def progress_bar(window, iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█'):
+def progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█', print_end="\r"):
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '-' * (length - filled_length)
-    window.addstr(2 + iteration, 2, f'{prefix} |{bar}| {percent}% {suffix}')
-    window.refresh()
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=print_end)
     if iteration == total:
-        window.addstr(2 + iteration, 2, '\n')
+        print()
 
-def run_test(window, user_password, inputnum_loops, kill, slotlist):
-    window.addstr(0, 0, "Running the test...\n")
-    window.refresh()
+def run_test(stdscr, user_password, inputnum_loops, kill, slotlist):
+    stdscr.addstr(0, 0, "Running the test...\n")
+    stdscr.refresh()
 
     # Initialize variables
     output_lines = []
@@ -205,7 +213,7 @@ def run_test(window, user_password, inputnum_loops, kill, slotlist):
         for j in indexlist:
             operation_count += 1
             slot_test_count[slotnumbers[j]] += 1
-            progress_bar(window, operation_count, total_operations, prefix='Progress', suffix='Complete', length=50)
+            progress_bar(operation_count, total_operations, prefix='Progress', suffix='Complete', length=50)
             specific_bus_bridge = listbdf[j]
             specific_bus_link = listbdfdown[j]
             desired_values = [bridgecontrollist[indexlist.index(j)], "0043"]
@@ -234,9 +242,9 @@ def run_test(window, user_password, inputnum_loops, kill, slotlist):
                         with open("output.txt", "w") as file:
                             for line in output_lines:
                                 file.write(line + "\n")
-                        window.addstr(2, 0, "Link status does not match capabilities. Killing the program.")
-                        window.refresh()
-                        window.getch()
+                        stdscr.addstr(2, 0, "Link status does not match capabilities. Killing the program.")
+                        stdscr.refresh()
+                        stdscr.getch()
                         return
 
     end_time = datetime.now()
@@ -247,9 +255,9 @@ def run_test(window, user_password, inputnum_loops, kill, slotlist):
         for line in output_lines:
             file.write(line + "\n")
 
-    window.addstr(2, 0, "Test completed. Check the output.txt file for results.")
-    window.refresh()
-    window.getch()  # Wait for a key press to keep the interface open
+    stdscr.addstr(2, 0, "Test completed. Check the output.txt file for results.")
+    stdscr.refresh()
+    stdscr.getch()  # Wait for a key press to keep the interface open
 
 # Example usage
 if __name__ == "__main__":
