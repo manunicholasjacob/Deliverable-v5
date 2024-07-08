@@ -99,8 +99,9 @@ def main(stdscr):
     input_window.getch()
 
     # Set error reporting to 0
-    device_window = curses.newwin(10, 60, height + 17, 1)
-    display_box(device_window, height + 17, 1, 10, 60, "Device Control Status")
+    device_window_height = 15
+    device_window = curses.newwin(device_window_height, 60, height + 17, 1)
+    display_box(device_window, height + 17, 1, device_window_height, 60, "Device Control Status")
     device_window.addstr(2, 2, "Setting error reporting to 0...")
     device_window.refresh()
 
@@ -113,15 +114,13 @@ def main(stdscr):
 
     if operation in ['s', 'b']:
         # Run the sbr functionality
-        sbr_window = curses.newwin(10, 60, height + 28, 1)
-        display_box(sbr_window, height + 28, 1, 10, 60, "SBR Test Status")
-        sbr_window.addstr(2, 2, "Running SBR tests...")
-        sbr_window.refresh()
+        device_window.addstr(5, 2, "Running SBR tests...")
+        device_window.refresh()
 
-        sbr.run_test(stdscr, user_password, inputnum_loops, kill, slotlist)
+        sbr.run_test(device_window, user_password, inputnum_loops, kill, slotlist)
 
-        sbr_window.addstr(4, 2, "SBR tests completed.")
-        sbr_window.refresh()
+        device_window.addstr(7, 2, "SBR tests completed.")
+        device_window.refresh()
 
     if operation in ['g', 'b']:
         # Run the GPU burn functionality
@@ -134,12 +133,12 @@ def main(stdscr):
         scroll_output(output_window, height + 3, 55, output_window_height, output_window_width, pad_pos)
 
     # Reset device control registers to original values
-    device_window.addstr(6, 2, "Resetting device control registers...")
+    device_window.addstr(8, 2, "Resetting device control registers...")
     device_window.refresh()
 
     device_control.reset_to_original_values()
 
-    device_window.addstr(8, 2, "Device control registers reset to original values.")
+    device_window.addstr(10, 2, "Device control registers reset to original values.")
     device_window.refresh()
 
     # Display summary screen
