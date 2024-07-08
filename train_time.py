@@ -49,7 +49,7 @@ def read_secondary_bus_number(bus):
 def set_bridge_control(bus, value, password):
     try:
         subprocess.run(["sudo", "-S", "setpci", "-s", bus, "3e.w=" + value], input=password.encode(), check=True)
-        print(f"Set Bridge Control for {bus} to {value}")
+        #print(f"Set Bridge Control for {bus} to {value}")
     except subprocess.CalledProcessError:
         print(f"Error setting Bridge Control for {bus}.")
 
