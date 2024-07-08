@@ -96,7 +96,7 @@ def read_and_extract_link_capabilities(bus, read_func):
 def extract_link_status(hex_string):
     binary_string = hex_to_binary(hex_string)
     current_link_width = int(binary_string[-4:], 2)
-    current_link_speed = int(binary_string[-10:-4], 2)
+    current_link_speed = int(binary_string[-10:-4:], 2)
     return current_link_width, current_link_speed
 
 def get_slot_numbers():
@@ -132,11 +132,11 @@ def log_dmidecode_info(log_file):
         with open(log_file, 'a') as log:
             log.write(f"\nError running dmidecode: {str(e)}\n")
 
-def progress_bar(window, iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█', print_end="\r"):
+def progress_bar(window, iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█'):
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '-' * (length - filled_length)
-    window.addstr(2 + iteration, 2, f'{prefix} |{bar}| {percent}% {suffix}', end=print_end)
+    window.addstr(2 + iteration, 2, f'{prefix} |{bar}| {percent}% {suffix}')
     window.refresh()
     if iteration == total:
         window.addstr(2 + iteration, 2, '\n')
