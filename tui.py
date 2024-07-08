@@ -1,4 +1,3 @@
-
 import curses
 import sbr
 import device_control
@@ -23,20 +22,20 @@ def main(stdscr):
         window.attroff(curses.color_pair(2))
         window.refresh()
 
-    # Function for Scollabilityr on the pad
+    # Function for Scollability on the pad
     def scroll_output(window, window_offset_y, window_offset_x, window_height, window_width, pad_pos):
         scroll_pad = pad_pos
         cmd = ''
         while True:
             cmd = window.getch()
             if cmd == ord('q'): break
-            if cmd == '^[[B':
+            if cmd == curses.KEY_DOWN:
                 if scroll_pad < pad_pos: scroll_pad += 1
                 window.refresh(scroll_pad, 0, window_offset_y, window_offset_x, min(curses.LINES-1, window_offset_y + window_height - 3), min(curses.COLS-1, window_offset_x + window_width - 5))
-            elif cmd == '^[[A':
+            elif cmd == curses.KEY_UP:
                 if scroll_pad > 0: scroll_pad -= 1
                 window.refresh(scroll_pad, 0, window_offset_y, window_offset_x, min(curses.LINES-1, window_offset_y + window_height - 3), min(curses.COLS-1, window_offset_x + window_width - 5))
-    
+
     # Display available slot numbers
     slot_numbers = sbr.get_slot_numbers()
     gpu_info_list = gpu_burn_script.gpu_traverse_up()
@@ -65,13 +64,6 @@ def main(stdscr):
     output_window_border = curses.newwin(output_window_height, output_window_width, height + 2, 50+3)
     display_box(output_window_border, 10, 41, height, slot_window_width+3, "Output")
     pad_pos = 0
-    for i in range(20):
-        pad_pos = gpu_burn_script.output_print(output_window, height + 3, 55, output_window_height, output_window_width, pad_pos, f"{i} asasassssasaasassasaasassasassasasasaasassasasasasasasasasasasassas")
-        time.sleep(0.2)
-
-    pad_pos = gpu_burn_script.check_replay(95, 10, 4, [], 10, output_window, height + 3, 55, output_window_height, output_window_width, pad_pos)
-
-    scroll_output(output_window, height + 3, 55, output_window_height, output_window_width, pad_pos)
 
     # Collect user inputs
     input_window_height = 15
@@ -93,11 +85,15 @@ def main(stdscr):
     slot_input = input_window.getstr().decode()
     slotlist = list(map(int, slot_input.split(',')))
 
+    input_window.addstr(10-2, 0, "Choose operation (s: SBR, g: GPU Burn, b: Both): ")
+    operation = input_window.getstr().decode().lower()
+
     input_window.clear()
     input_window.addstr(2-2, 0, f"Password: {'*' * len(user_password)}")
     input_window.addstr(4-2, 0, f"Number of Loops: {inputnum_loops}")
     input_window.addstr(6-2, 0, f"Kill on error: {kill}")
     input_window.addstr(8-2, 0, f"Slot numbers to test: {slotlist}")
+    input_window.addstr(10-2, 0, f"Operation: {operation}")
     input_window.addstr(12-2, 0, "Press any key to start the test...")
     input_window.refresh()
     input_window.getch()
@@ -115,16 +111,27 @@ def main(stdscr):
     device_window.addstr(4, 2, "Error reporting set to 0.")
     device_window.refresh()
 
-    # Run the sbr functionality
-    sbr_window = curses.newwin(10, 60, height + 28, 1)
-    display_box(sbr_window, height + 28, 1, 10, 60, "SBR Test Status")
-    sbr_window.addstr(2, 2, "Running SBR tests...")
-    sbr_window.refresh()
+    if operation in ['s', 'b']:
+        # Run the sbr functionality
+        sbr_window = curses.newwin(10, 60, height + 28, 1)
+        display_box(sbr_window, height + 28, 1, 10, 60, "SBR Test Status")
+        sbr_window.addstr(2, 2, "Running SBR tests...")
+        sbr_window.refresh()
 
-    sbr.run_test(stdscr, user_password, inputnum_loops, kill, slotlist)
+        sbr.run_test(stdscr, user_password, inputnum_loops, kill, slotlist)
 
-    sbr_window.addstr(4, 2, "SBR tests completed.")
-    sbr_window.refresh()
+        sbr_window.addstr(4, 2, "SBR tests completed.")
+        sbr_window.refresh()
+
+    if operation in ['g', 'b']:
+        # Run the GPU burn functionality
+        for i in range(20):  # Example loop, replace with actual GPU burn logic
+            pad_pos = gpu_burn_script.output_print(output_window, height + 3, 55, output_window_height, output_window_width, pad_pos, f"Output line {i}")
+            time.sleep(0.2)
+
+        pad_pos = gpu_burn_script.check_replay(95, 10, 4, [], 10, output_window, height + 3, 55, output_window_height, output_window_width, pad_pos)
+
+        scroll_output(output_window, height + 3, 55, output_window_height, output_window_width, pad_pos)
 
     # Reset device control registers to original values
     device_window.addstr(6, 2, "Resetting device control registers...")
@@ -142,7 +149,7 @@ def main(stdscr):
     try:
         with open("output.txt", "r") as file:
             lines = file.readlines()
-        
+
         start_time = next(line for line in lines if line.startswith("Start Time:")).split(": ", 1)[1].strip()
         end_time = next(line for line in lines if line.startswith("End Time:")).split(": ", 1)[1].strip()
         tested_bdfs = next(line for line in lines if line.startswith("Tested BDFs:")).split(": ", 1)[1].strip()
