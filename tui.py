@@ -22,7 +22,7 @@ def main(stdscr):
         window.attroff(curses.color_pair(2))
         window.refresh()
 
-    # Function for Scollability on the pad
+    # Function for Scrollability on the pad
     def scroll_output(window, window_offset_y, window_offset_x, window_height, window_width, pad_pos):
         scroll_pad = pad_pos
         cmd = ''
@@ -143,7 +143,6 @@ def main(stdscr):
     device_window.refresh()
 
     # Display summary screen
-    stdscr.clear()
     display_box(stdscr, 1, 1, 20, 60, "Test Summary")
 
     try:
