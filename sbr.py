@@ -224,7 +224,7 @@ def run_test(window, user_password, inputnum_loops, kill, slotlist):
                         output_lines.append(f"Link Capabilities: {link_capabilities['downstream'][indexlist.index(j)]}")
                         output_lines.append(f"Error Time: {error_time}")
                 elif kill == "y":
-                    if current_link_status != link_capabilities["downstream"][indexlist.index(j)]):
+                    if current_link_status != link_capabilities["downstream"][indexlist.index(j)]:
                         error_time = datetime.now()
                         output_lines.append(f"Reset {i}")
                         output_lines.append(f"Link status does not match capabilities for bus {specific_bus_link}")
